@@ -1,3 +1,4 @@
+##
 import os
 
 import numpy as np
@@ -8,14 +9,17 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from torchvision.transforms import ToTensor
 
 from tifffile import imread
+
 
 def img_loader(path):
     return imread(path)
 
+
 class DatasetSegmentation(Dataset):
-    def _init_(self, data_path, transform=None):
+    def __init__(self, data_path, transform=None):
         super().__init__()
         self.data_path = data_path
         self.transform = transform
@@ -24,10 +28,10 @@ class DatasetSegmentation(Dataset):
         self.tile_list = os.listdir(self.tile_path)  # this is a list
         self.mask_list = os.listdir(self.mask_path)
 
-    def _len_(self):
+    def __len__(self):
         return len(self.tile_list)
 
-    def _getitem_(self, index):
+    def __getitem__(self, index):
         tile_name = self.tile_list[index]
         mask_name = self.mask_list[index]
         
@@ -35,6 +39,8 @@ class DatasetSegmentation(Dataset):
         mask_path = os.path.join(self.mask_path, mask_name)
         
         tile = imread(tile_path)
+        tile = ToTensor()(tile)
+        torch.permute(tile, (2, 0, 1))
         mask = imread(mask_path)
         return tile, mask
 
@@ -49,7 +55,7 @@ class yolo_model(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.backbone = nn.Sequential(*(list(model.children())[1:-1]))
-        self.out = nn.Conv2d(32, 1, 1)
+        self.out = nn.Conv2d(48, 1, 1)
 
     def forward(self, x):
         x = F.silu(self.inp(x))
@@ -57,11 +63,13 @@ class yolo_model(nn.Module):
         x = F.silu(self.out(x))
         return x
 
+
 path = "./treecover_segmentation_aerial_goettingen"
 data = DatasetSegmentation(path)
 
-train_loader = DataLoader(data, 1)
-model = yolo_model(3)
+train_loader = DataLoader(data,batch_size=1, shuffle=True)
+model = yolo_model(in_channels=4)
+#model = yolo_model(3)
 
 # model.info(detailed=True)
 # print(model)
@@ -69,10 +77,12 @@ model = yolo_model(3)
 # newmodel = torch.nn.Sequential(*(list(model.children())[:-1]))
 # print(newmodel)
 # print(list(model.children())[-1])
+
+##
 print("Welcome to the trees_groningen")
 print(torch.cuda.is_available(), torch.cuda.device_count())
 num_epochs = 10
-optimizer = optim.Adam()
+optimizer = optim.Adam(model.parameters())
 for epoch in range(num_epochs):
     running_loss = 0.0
     for inputs, labels in train_loader:  # Assuming train_loader is your DataLoader
