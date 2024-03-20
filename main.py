@@ -42,6 +42,7 @@ class DatasetSegmentation(Dataset):
         tile = ToTensor()(tile)
         torch.permute(tile, (2, 0, 1))
         mask = imread(mask_path)
+        mask = ToTensor()(mask)
         return tile, mask
 
 
@@ -55,12 +56,14 @@ class yolo_model(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.backbone = nn.Sequential(*(list(model.children())[1:-1]))
-        self.out = nn.Conv2d(48, 1, 1)
+        self.out_1 = nn.Conv2d(48, 1, 1)
+        self.out_2 = nn.Upsample(scale_factor=2)
 
     def forward(self, x):
         x = F.silu(self.inp(x))
         x = F.silu(self.backbone(x))
-        x = F.silu(self.out(x))
+        x = F.silu(self.out_1(x))
+        x = F.silu(self.out_2(x))
         return x
 
 
@@ -83,12 +86,15 @@ print("Welcome to the trees_groningen")
 print(torch.cuda.is_available(), torch.cuda.device_count())
 num_epochs = 10
 optimizer = optim.Adam(model.parameters())
+criterion = nn.MSELoss()
 for epoch in range(num_epochs):
     running_loss = 0.0
+    print("Epoch {}/{}".format(epoch+1, num_epochs))
     for inputs, labels in train_loader:  # Assuming train_loader is your DataLoader
         optimizer.zero_grad()  # Zero the gradients
         outputs = model(inputs)  # Forward pass
-        loss = nn.MSELoss()(outputs, labels)  # Compute the loss
+        loss = criterion(outputs, labels)  # Compute the loss
         loss.backward()  # Backpropagation
         optimizer.step()  # Update the weights
         running_loss += loss.item()
+    print(f"Loss: {running_loss}")
