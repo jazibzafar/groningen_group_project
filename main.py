@@ -1,100 +1,94 @@
-##
 import os
 
-import numpy as np
-from ultralytics import YOLO
-import torch
+import argparse
+from numpy import arange
 
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import ToTensor
+from src.model import yolo_model
 
-from tifffile import imread
+# function that determines the function call parameters and returns them
+def get_arguments():
+    parser = argparse.ArgumentParser(description='Deep Learning Project')
+
+    # arguments allowed in function call
+    parser.add_argument('--model', type=str, default="coco", help='What model to use (empty, coco, retrained_empty, retrained_coco)')
+
+    parser.add_argument('--dataset', type=str, default="goettingen", help='What dataset to be used  for training (goettingen or india)')
+
+    parser.add_argument('--on-augmented', type=bool, default=False, help='Whether to run training on augmented data')
+
+    parser.add_argument('--input-channels', type=int, default=4, help='How many color channels do ')
+
+    parser.add_argument('--batch-size', type=int, default=64, help='Batch Size')
+
+    parser.add_argument('--epochs', type=int, default=100, help='No. epochs')
+
+    parser.add_argument('--optimizer', type=str, default="adam", help='What optimizer to use (adam or sgd)')
+
+    parser.add_argument('--loss', type=str, default="l2", help='What loss to use (l1 or l2)')
+    
+    arguments = parser.parse_args()
+
+    # raising errors for wrong args input
+    if arguments.optimizer not in ["adam", "sgd"]:
+        raise parser.error("The optimizer should be either 'adam' or 'sgd' for --optimizer")
+    
+    if arguments.dataset not in ["goettingen", "india"]:
+        raise parser.error("The dataset should be either 'goettingen' or 'india' for --optimizer")
+    
+    if arguments.model not in ["empty", "coco", "retrained_empty", "retrained_coco"]:
+        raise parser.error("The model should be either 'adam' or 'sgd' for --model")
+    
+    if arguments.loss not in ["l1", "l2"]:
+        raise parser.error("The loss should be either 'l1' or 'l2' for --loss")
+    
+    if arguments.dataset == "india":
+        print("Warning: This dataset will not be augmented!!!")
+
+    # returning each function call parameter
+    return arguments
 
 
-def img_loader(path):
-    return imread(path)
+def run(model_name:str= "coco",
+        dataset_name:str= "goettingen",
+        train_on_augmented:bool= True,
+        in_channels:int= 4, 
+        batch_size:int= 64,
+        num_epochs:int= 100,
+        optimizer:str= "adam",
+        loss:str= "l2"
+        ):
+    
+    model = yolo_model(model_name= model_name, in_channels=in_channels)
+
+    if dataset_name == "goettingen":
+        if train_on_augmented:
+            data_path = os.path.join(os.getcwd(), "data", "goettingen_augmented")
+        else:
+            data_path = os.path.join(os.getcwd(), "data", "goettingen")
+    elif dataset_name == "india":
+        data_path = os.path.join(os.getcwd(), "data", "india")
+    else:
+        data_path = os.path.join(os.getcwd(), "data", "goettingen")
+
+    model.train(path=data_path, 
+                batch_size=batch_size, 
+                num_epochs= num_epochs, 
+                optimizer_class= optimizer, 
+                loss= loss)
 
 
-class DatasetSegmentation(Dataset):
-    def __init__(self, data_path, transform=None):
-        super().__init__()
-        self.data_path = data_path
-        self.transform = transform
-        self.tile_path = os.path.join(self.data_path, 'tiles')
-        self.mask_path = os.path.join(self.data_path, 'masks')
-        self.tile_list = os.listdir(self.tile_path)  # this is a list
-        self.mask_list = os.listdir(self.mask_path)
 
-    def __len__(self):
-        return len(self.tile_list)
-
-    def __getitem__(self, index):
-        tile_name = self.tile_list[index]
-        mask_name = self.mask_list[index]
-        
-        tile_path = os.path.join(self.tile_path, tile_name)
-        mask_path = os.path.join(self.mask_path, mask_name)
-        
-        tile = imread(tile_path)
-        tile = ToTensor()(tile)
-        torch.permute(tile, (2, 0, 1))
-        mask = imread(mask_path)
-        mask = ToTensor()(mask)
-        return tile, mask
-
-
-class yolo_model(nn.Module):
-    def __init__(self, in_channels= 4):
-        super().__init__()
-        model = YOLO("yolov8m-seg.pt")
-        self.inp = nn.Sequential(
-            nn.Conv2d(in_channels, 48, kernel_size=3, stride=2, padding=1, bias= False),
-            nn.BatchNorm2d(48),
-            nn.ReLU(inplace=True),
+if __name__ == '__main__':
+    arguments = get_arguments()
+    
+    # To not perform a part of the task mention it in run command line. For example: -no-training
+    run(
+        model_name=arguments.model,
+        dataset_name=arguments.dataset,
+        train_on_augmented=arguments.on_augmented,
+        in_channels=arguments.input_channels,
+        batch_size=arguments.batch_size,
+        num_epochs=arguments.epochs,
+        optimizer=arguments.optimizer,
+        loss=arguments.loss
         )
-        self.backbone = nn.Sequential(*(list(model.children())[1:-1]))
-        self.out_1 = nn.Conv2d(48, 1, 1)
-        self.out_2 = nn.Upsample(scale_factor=2)
-
-    def forward(self, x):
-        x = F.silu(self.inp(x))
-        x = F.silu(self.backbone(x))
-        x = F.silu(self.out_1(x))
-        x = F.silu(self.out_2(x))
-        return x
-
-
-path = "./treecover_segmentation_aerial_goettingen"
-data = DatasetSegmentation(path)
-
-train_loader = DataLoader(data,batch_size=1, shuffle=True)
-model = yolo_model(in_channels=4)
-#model = yolo_model(3)
-
-# model.info(detailed=True)
-# print(model)
-# model = YOLO("yolov8m-seg.pt")
-# newmodel = torch.nn.Sequential(*(list(model.children())[:-1]))
-# print(newmodel)
-# print(list(model.children())[-1])
-
-##
-print("Welcome to the trees_groningen")
-print(torch.cuda.is_available(), torch.cuda.device_count())
-num_epochs = 10
-optimizer = optim.Adam(model.parameters())
-criterion = nn.MSELoss()
-for epoch in range(num_epochs):
-    running_loss = 0.0
-    print("Epoch {}/{}".format(epoch+1, num_epochs))
-    for inputs, labels in train_loader:  # Assuming train_loader is your DataLoader
-        optimizer.zero_grad()  # Zero the gradients
-        outputs = model(inputs)  # Forward pass
-        loss = criterion(outputs, labels)  # Compute the loss
-        loss.backward()  # Backpropagation
-        optimizer.step()  # Update the weights
-        running_loss += loss.item()
-    print(f"Loss: {running_loss}")
