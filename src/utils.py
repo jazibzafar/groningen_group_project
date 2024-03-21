@@ -6,9 +6,12 @@ from torchvision.transforms import ToTensor
 
 from tifffile import imread
 
-
 def img_loader(path):
     return imread(path)
+
+def delete_list(lst):
+    del lst[:]
+    del lst
 
 def calculate_performance(predictions, targets):
 

@@ -4,6 +4,7 @@ import argparse
 from numpy import arange
 
 from src.model import yolo_model
+from src.data_augmentation import augment_dataset
 
 # function that determines the function call parameters and returns them
 def get_arguments():
@@ -80,15 +81,16 @@ def run(model_name:str= "coco",
 
 if __name__ == '__main__':
     arguments = get_arguments()
+    augment_dataset()
     
     # To not perform a part of the task mention it in run command line. For example: -no-training
-    run(
-        model_name=arguments.model,
-        dataset_name=arguments.dataset,
-        train_on_augmented=arguments.on_augmented,
-        in_channels=arguments.input_channels,
-        batch_size=arguments.batch_size,
-        num_epochs=arguments.epochs,
-        optimizer=arguments.optimizer,
-        loss=arguments.loss
-        )
+    # run(
+    #     model_name=arguments.model,
+    #     dataset_name=arguments.dataset,
+    #     train_on_augmented=arguments.on_augmented,
+    #     in_channels=arguments.input_channels,
+    #     batch_size=arguments.batch_size,
+    #     num_epochs=arguments.epochs,
+    #     optimizer=arguments.optimizer,
+    #     loss=arguments.loss
+    #     )
