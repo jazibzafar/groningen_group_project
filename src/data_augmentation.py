@@ -10,7 +10,7 @@ def augment_dataset(path:str= "./data/goettingen"):
     all_tiles_path = os.path.join(path, 'tiles')
     all_masks_path = os.path.join(path, 'masks')
     path_augmented = path + "_augmented"
-    all_tiles_path_augmented = os.path.join(path_augmented, 'lists')
+    all_tiles_path_augmented = os.path.join(path_augmented, 'tiles')
     all_masks_path_augmented = os.path.join(path_augmented, 'masks')
 
     if not(Path(path_augmented).exists()):
@@ -20,7 +20,7 @@ def augment_dataset(path:str= "./data/goettingen"):
     if not(Path(all_masks_path_augmented).exists()):
         os.mkdir(all_masks_path_augmented)
     #TODO: change limit for doing augmentation
-    if len(os.listdir(all_tiles_path)) < 2000:
+    if len(os.listdir(all_tiles_path_augmented)) < 2000:
         print("Starting Augmentation")
         for img_no in tqdm(range(1, len(os.listdir(all_tiles_path)) + 1)):
             tile_list = [img_loader(os.path.join(all_tiles_path,"tile_" + str(img_no) + ".tif"))]
@@ -67,22 +67,28 @@ def augment_dataset(path:str= "./data/goettingen"):
             delete_list(temp)
 
             for index in range(0,len(tile_list)):
+                resized = tile_list[index].copy()
+                if resized.shape[0] == 1024:
+                    resized.resize((512,512,4))
+                if resized.shape[2] == 1:
+                    print("SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") 
                 if index == 0:
-                    original_resized = tile_list[0].copy()
-                    original_resized.resize((512,512,4))
-                    imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + ".tif"), original_resized)
+                    imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + ".tif"), resized)
                 else:
-                    imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + "_" + str(index) + ".tif"), tile_list[index])
+                    imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + "_" + str(index) + ".tif"), resized)
+                del resized
             
             delete_list(tile_list)
 
             for index in range(0,len(mask_list)):
+                resized = mask_list[index].copy()
+                if resized.shape[0] == 1024:
+                    resized.resize((512,512)) 
                 if index == 0:
-                    original_resized = mask_list[0].copy()
-                    original_resized.resize((512,512))
-                    imwrite(os.path.join(all_masks_path_augmented, "mask_" + str(img_no) + ".tif"), original_resized)
+                    imwrite(os.path.join(all_masks_path_augmented, "mask_" + str(img_no) + ".tif"), resized)
                 else:
-                    imwrite(os.path.join(all_masks_path_augmented, "mask_" + str(img_no) + "_" + str(index) + ".tif"), mask_list[index])
+                    imwrite(os.path.join(all_masks_path_augmented, "mask_" + str(img_no) + "_" + str(index) + ".tif"), resized)
+                del resized
             
             delete_list(mask_list)
 

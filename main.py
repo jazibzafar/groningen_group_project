@@ -15,7 +15,7 @@ def get_arguments():
 
     parser.add_argument('--dataset', type=str, default="goettingen", help='What dataset to be used  for training (goettingen or india)')
 
-    parser.add_argument('--on-augmented', type=bool, default=False, help='Whether to run training on augmented data')
+    parser.add_argument('--on-augmented', type=bool, default=True, help='Whether to run training on augmented data')
 
     parser.add_argument('--input-channels', type=int, default=4, help='How many color channels do ')
 
@@ -84,13 +84,13 @@ if __name__ == '__main__':
     augment_dataset()
     
     # To not perform a part of the task mention it in run command line. For example: -no-training
-    # run(
-    #     model_name=arguments.model,
-    #     dataset_name=arguments.dataset,
-    #     train_on_augmented=arguments.on_augmented,
-    #     in_channels=arguments.input_channels,
-    #     batch_size=arguments.batch_size,
-    #     num_epochs=arguments.epochs,
-    #     optimizer=arguments.optimizer,
-    #     loss=arguments.loss
-    #     )
+    run(
+        model_name=arguments.model,
+        dataset_name=arguments.dataset,
+        train_on_augmented=arguments.on_augmented,
+        in_channels=arguments.input_channels,
+        batch_size=arguments.batch_size,
+        num_epochs=arguments.epochs,
+        optimizer=arguments.optimizer,
+        loss=arguments.loss
+        )
