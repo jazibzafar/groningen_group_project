@@ -25,8 +25,10 @@ def augment_dataset(path:str= "./data/goettingen"):
         for img_no in tqdm(range(1, len(os.listdir(all_tiles_path)) + 1)):
             tile_list = [img_loader(os.path.join(all_tiles_path,"tile_" + str(img_no) + ".tif"))]
             mask_list = [img_loader(os.path.join(all_masks_path,"mask_" + str(img_no) + ".tif"))]
-            tile_list.append(np.flip(tile_list[0][,,:]))
-            mask_list.append(np.flip(mask_list[0]))
+            tile_list.append(np.flipud(tile_list[0]))
+            tile_list.append(np.fliplr(tile_list[0]))
+            mask_list.append(np.flipud(mask_list[0]))
+            mask_list.append(np.fliplr(mask_list[0]))
 
             temp = []
             for tile in tile_list:
@@ -69,8 +71,6 @@ def augment_dataset(path:str= "./data/goettingen"):
                     original_resized = tile_list[0].copy()
                     original_resized.resize((512,512,4))
                     imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + ".tif"), original_resized)
-                if index == 1:
-                    imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + "_flip.tif"), tile_list[index])
                 else:
                     imwrite(os.path.join(all_tiles_path_augmented, "tile_" + str(img_no) + "_" + str(index) + ".tif"), tile_list[index])
             
