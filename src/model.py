@@ -14,7 +14,7 @@ from src.utils import DatasetSegmentation, calculate_performance
 
 
 class yolo_model(nn.Module):
-    def __init__(self, model_name:str="coco", in_channels:int= 4):
+    def __init__(self, model_name: str = "coco", in_channels: int = 4):
         super().__init__()
         #TODO: change model loading paths
         if model_name == "coco":

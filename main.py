@@ -49,14 +49,14 @@ def get_arguments():
     return arguments
 
 
-def run(model_name:str= "coco",
-        dataset_name:str= "goettingen",
-        train_on_augmented:bool= True,
-        in_channels:int= 4, 
-        batch_size:int= 64,
-        num_epochs:int= 100,
-        optimizer:str= "adam",
-        loss:str= "l2"
+def run(model_name: str = "coco",
+        dataset_name: str = "goettingen",
+        train_on_augmented: bool = True,
+        in_channels: int = 4,
+        batch_size: int = 64,
+        num_epochs: int = 100,
+        optimizer: str = "adam",
+        loss: str = "l2"
         ):
     
     model = yolo_model(model_name= model_name, in_channels=in_channels)
@@ -73,10 +73,9 @@ def run(model_name:str= "coco",
 
     model.train(path=data_path, 
                 batch_size=batch_size, 
-                num_epochs= num_epochs, 
-                optimizer_class= optimizer, 
-                loss= loss)
-
+                num_epochs=num_epochs,
+                optimizer_class=optimizer,
+                loss=loss)
 
 
 if __name__ == '__main__':

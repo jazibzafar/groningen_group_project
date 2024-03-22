@@ -6,7 +6,8 @@ from tifffile import imwrite
 from tqdm import tqdm
 import numpy as np
 
-def augment_dataset(path:str= "./data/goettingen"):
+
+def augment_dataset(path: str = "./data/goettingen"):
     all_tiles_path = os.path.join(path, 'tiles')
     all_masks_path = os.path.join(path, 'masks')
     path_augmented = path + "_augmented"

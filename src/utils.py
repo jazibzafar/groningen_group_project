@@ -13,13 +13,14 @@ def delete_list(lst):
     del lst[:]
     del lst
 
-def calculate_performance(predictions, targets):
 
-    # Compute accuracy
-    div = (targets - predictions).float()
-    accuracy = div.sum() / len(div)
+def jaccard_index(predictions, targets):
+    intersection = predictions*targets
+    union = predictions + targets - intersection
+    numerator = intersection.sum()
+    denominator = union.sum()
+    return numerator/denominator
 
-    return accuracy.item()
 
 class DatasetSegmentation(Dataset):
     def __init__(self, data_path, transform=None):
