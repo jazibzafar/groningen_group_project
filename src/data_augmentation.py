@@ -51,18 +51,18 @@ def augment_dataset(path: str = "./data/goettingen"):
             mask_list[:] = [*mask_list, *temp]
             del temp[:]
 
-            for tile in tile_list:
-                temp.append(np.rot90(tile, k=1, axes=(0,1)))
-                temp.append(np.rot90(tile, k=2, axes=(0,1)))
-                temp.append(np.rot90(tile, k=3, axes=(0,1)))
+            # for tile in tile_list:
+            #     temp.append(np.rot90(tile, k=1, axes=(0,1)))
+            #     temp.append(np.rot90(tile, k=2, axes=(0,1)))
+            #     temp.append(np.rot90(tile, k=3, axes=(0,1)))
             
             tile_list[:] = [*tile_list, *temp]
             del temp[:]
 
-            for mask in mask_list:
-                temp.append(np.rot90(mask, k=1, axes=(0,1)))
-                temp.append(np.rot90(mask, k=2, axes=(0,1)))
-                temp.append(np.rot90(mask, k=3, axes=(0,1)))
+            # for mask in mask_list:
+            #     temp.append(np.rot90(mask, k=1, axes=(0,1)))
+            #     temp.append(np.rot90(mask, k=2, axes=(0,1)))
+            #     temp.append(np.rot90(mask, k=3, axes=(0,1)))
             
             mask_list[:] = [*mask_list, *temp]
             delete_list(temp)
