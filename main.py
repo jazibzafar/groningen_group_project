@@ -37,7 +37,7 @@ def get_arguments():
         raise parser.error("The dataset should be either 'goettingen' or 'india' for --optimizer")
     
     if arguments.model not in ["empty", "coco", "retrained_empty", "retrained_coco"]:
-        raise parser.error("The model should be either 'adam' or 'sgd' for --model")
+        raise parser.error("The model should be either 'empty', 'coco', 'retrained_empty' or 'retrained_coco' for --model")
     
     if arguments.loss not in ["l1", "l2"]:
         raise parser.error("The loss should be either 'l1' or 'l2' for --loss")

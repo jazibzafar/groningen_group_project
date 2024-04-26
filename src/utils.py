@@ -14,7 +14,7 @@ def delete_list(lst):
     del lst
 
 
-def jaccard_index(predictions, targets):
+def calculate_performance(predictions, targets):
     intersection = predictions*targets
     union = predictions + targets - intersection
     numerator = intersection.sum()
