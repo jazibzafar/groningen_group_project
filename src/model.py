@@ -10,10 +10,10 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from src.utils import DatasetSegmentation, calculate_performance
+from src.utils import DatasetSegmentation, calculate_performance, GoeTransform
 
 
-class yolo_model(nn.Module):
+class YoloModel(nn.Module):
     def __init__(self, model_name: str = "coco", in_channels: int = 4):
         super().__init__()
         #TODO: change model loading paths
@@ -43,14 +43,16 @@ class yolo_model(nn.Module):
         return x
     
     def train(self,
-               path= "./data/goettingen",
-                batch_size:int= 64, 
-                num_epochs:int= 100, 
-                optimizer_class:str= "adam",
-                loss:str= "l2" ):
+              path = "./data/goettingen",
+              input_size: int = 256,
+              batch_size: int = 64,
+              num_epochs: int = 100,
+              optimizer_class: str = "adam",
+              loss: str = "l2"):
         
         print(f"Creating dataset and loader for {path}")
-        data = DatasetSegmentation(path)
+        augment = GoeTransform(input_size=input_size)
+        data = DatasetSegmentation(path, transform=augment)
         train_loader = DataLoader(data,batch_size=batch_size, shuffle=True)
 
         if optimizer_class == "adam":

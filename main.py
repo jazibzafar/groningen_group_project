@@ -7,6 +7,9 @@ from src.model import yolo_model
 from src.data_augmentation import augment_dataset
 
 # function that determines the function call parameters and returns them
+# NOTE: The function below specifies the inputs to the model. For instance, if you want to run it from the terminal,
+# you would run it like this:
+# python3.exe main.py --model "coco" --dataset "goettingen" ...
 def get_arguments():
     parser = argparse.ArgumentParser(description='Deep Learning Project')
 
@@ -18,6 +21,8 @@ def get_arguments():
     parser.add_argument('--on-augmented', type=bool, default=True, help='Whether to run training on augmented data')
 
     parser.add_argument('--input-channels', type=int, default=4, help='How many color channels do ')
+
+    parser.add_argument('--input-size', type=int, default=256, help='the size of the input image')
 
     parser.add_argument('--batch-size', type=int, default=64, help='Batch Size')
 
@@ -48,7 +53,7 @@ def get_arguments():
     # returning each function call parameter
     return arguments
 
-
+# NOTE: This is the function that is called to run the training and validation of the model.
 def run(model_name: str = "coco",
         dataset_name: str = "goettingen",
         train_on_augmented: bool = True,
@@ -58,9 +63,11 @@ def run(model_name: str = "coco",
         optimizer: str = "adam",
         loss: str = "l2"
         ):
-    
+
+    # NOTE: Here we declare what model we are using
     model = yolo_model(model_name= model_name, in_channels=in_channels)
 
+    # NOTE: The dataset is declared here.
     if dataset_name == "goettingen":
         if train_on_augmented:
             data_path = os.path.join(os.getcwd(), "data", "goettingen_augmented")
@@ -71,6 +78,7 @@ def run(model_name: str = "coco",
     else:
         data_path = os.path.join(os.getcwd(), "data", "goettingen")
 
+    # NOTE: This is the training function. When model.train() is called, the training begins.
     model.train(path=data_path, 
                 batch_size=batch_size, 
                 num_epochs=num_epochs,
@@ -78,10 +86,13 @@ def run(model_name: str = "coco",
                 loss=loss)
 
 
+# NOTE: This part of the code tells the python interpreter what to do.
 if __name__ == '__main__':
+    # 1. You get the arguments for the training.
     arguments = get_arguments()
     augment_dataset()
-    
+
+    # 2. You run the training using the arguments called above.
     # To not perform a part of the task mention it in run command line. For example: -no-training
     run(
         model_name=arguments.model,

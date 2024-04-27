@@ -54,8 +54,8 @@ class DatasetSegmentation(Dataset):
         super().__init__()
         self.data_path = data_path
         self.transform = transform
-        self.tile_path = os.path.join(self.data_path, 'tiles')
-        self.mask_path = os.path.join(self.data_path, 'masks')
+        self.tile_path = os.path.join(self.data_path, 'tiles/')
+        self.mask_path = os.path.join(self.data_path, 'masks/')
         self.tile_list = os.listdir(self.tile_path)  # this is a list
         self.mask_list = os.listdir(self.mask_path)
 
