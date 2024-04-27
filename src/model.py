@@ -76,6 +76,7 @@ class YoloModel(nn.Module):
             for inputs, labels in train_loader:  # Assuming train_loader is your DataLoader
                 optimizer.zero_grad()  # Zero the gradients
                 outputs = self(inputs)  # Forward pass
+                outputs = outputs.squeeze(1)  # labels are bs x w x h while outputs are bs x 1 x w x h; this corrects it
                 loss = criterion(outputs, labels)  # Compute the loss
                 loss.backward()  # Backpropagation
                 optimizer.step()  # Update the weights
