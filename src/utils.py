@@ -70,8 +70,8 @@ class DatasetSegmentation(Dataset):
         mask_path = os.path.join(self.mask_path, mask_name)
         
         tile = imread(tile_path)
-        tile = ToTensor()(tile)
-        torch.permute(tile, (2, 0, 1))
+        # tile = ToTensor()(tile)
+        # torch.permute(tile, (2, 0, 1))
         if self.transform:
             tile = self.transform(image=tile)
 

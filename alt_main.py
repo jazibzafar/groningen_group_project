@@ -13,9 +13,9 @@ class Args:
     def __init__(self):
         self.model = "coco"
         self.in_channels=4
-        self.data_path = "./data/oettingen/sliced/"
+        self.data_path = "./data/goettingen/sliced/"
         self.batch_size=32
-        self.num_epochs=1
+        self.num_epochs=10
 
 def test_main():
     # args = get_arguments()
