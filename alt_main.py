@@ -1,4 +1,5 @@
 from src.model import YoloModel
+from src.slicer import data_slicer
 
 
 class Args:
@@ -12,6 +13,7 @@ class Args:
 def test_main():
     # args = get_arguments()
     args = Args()
+    data_slicer()
     model = YoloModel(model_name=args.model, in_channels=args.in_channels)
     model.train(path=args.data_path,
                 batch_size=args.batch_size,

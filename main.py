@@ -3,7 +3,7 @@ import os
 import argparse
 from numpy import arange
 
-from src.model import yolo_model
+from src.model import YoloModel
 from src.data_augmentation import augment_dataset
 
 # function that determines the function call parameters and returns them
@@ -18,7 +18,7 @@ def get_arguments():
 
     parser.add_argument('--dataset', type=str, default="goettingen", help='What dataset to be used  for training (goettingen or india)')
 
-    parser.add_argument('--on-augmented', type=bool, default=True, help='Whether to run training on augmented data')
+    parser.add_argument('--on-augmented', type=bool, default=False, help='Whether to run training on augmented data')
 
     parser.add_argument('--input-channels', type=int, default=4, help='How many color channels do ')
 
@@ -65,32 +65,33 @@ def run(model_name: str = "coco",
         ):
 
     # NOTE: Here we declare what model we are using
-    model = yolo_model(model_name= model_name, in_channels=in_channels)
+    model = YoloModel(model_name= model_name, in_channels=in_channels)
 
     # NOTE: The dataset is declared here.
     if dataset_name == "goettingen":
         if train_on_augmented:
+            augment_dataset()
             data_path = os.path.join(os.getcwd(), "data", "goettingen_augmented")
         else:
-            data_path = os.path.join(os.getcwd(), "data", "goettingen")
+            data_path = os.path.join(os.getcwd(), "data", "goettingen", "sliced")
     elif dataset_name == "india":
         data_path = os.path.join(os.getcwd(), "data", "india")
     else:
         data_path = os.path.join(os.getcwd(), "data", "goettingen")
 
     # NOTE: This is the training function. When model.train() is called, the training begins.
-    model.train(path=data_path, 
+    model.train_on_data(path=data_path, 
                 batch_size=batch_size, 
                 num_epochs=num_epochs,
                 optimizer_class=optimizer,
                 loss=loss)
+    model.test(path=data_path)
 
 
 # NOTE: This part of the code tells the python interpreter what to do.
 if __name__ == '__main__':
     # 1. You get the arguments for the training.
     arguments = get_arguments()
-    augment_dataset()
 
     # 2. You run the training using the arguments called above.
     # To not perform a part of the task mention it in run command line. For example: -no-training
