@@ -56,8 +56,8 @@ class DatasetSegmentation(Dataset):
         self.transform = transform
         self.tile_path = os.path.join(self.data_path, 'tiles/')
         self.mask_path = os.path.join(self.data_path, 'masks/')
-        self.tile_list = os.listdir(self.tile_path)  # this is a list
-        self.mask_list = os.listdir(self.mask_path)
+        self.tile_list = sorted(os.listdir(self.tile_path), key=len)  # this is a list
+        self.mask_list = sorted(os.listdir(self.mask_path), key=len)
 
     def __len__(self):
         return len(self.tile_list)
