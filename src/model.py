@@ -58,7 +58,7 @@ class YoloModel(nn.Module):
         augment = GoeTransform(input_size=input_size)
         data = DatasetSegmentation(data_path, transform=augment)
         train_data, validation_data, test_data = random_split(data,
-                                                              [0.7, 0.1, 0.2],
+                                                              [0.8, 0.1, 0.1],
                                                               generator=data_generator)
         return train_data, validation_data, test_data
 
@@ -153,14 +153,21 @@ class YoloModel(nn.Module):
 
         test_loader = DataLoader(self.test_data,batch_size=1, shuffle=True)
         print("Starting Testing")
+        test_tiles = []
+        test_masks = []
+        test_preds = []
         self.eval()
         with torch.no_grad():
             for vinputs, vlabels in test_loader:
                 voutputs = self(vinputs)
                 voutputs = voutputs.squeeze(1)
+                test_tiles.append(vinputs)
+                test_masks.append(vlabels)
+                test_preds.append(voutputs)
                 acc += calculate_performance(vlabels, voutputs)
         acc /= len(test_loader)
         print(f"Testing iou: {acc}")
+        return test_tiles, test_masks, test_preds
 
     def predict(self):
         pass
