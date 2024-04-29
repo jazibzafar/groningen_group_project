@@ -1,24 +1,27 @@
 from src.model import YoloModel
 from src.slicer import data_slicer
+from dataclasses import dataclass
 
 
+@dataclass
 class Args:
-    def __init__(self):
-        self.model = "coco"
-        self.in_channels = 4
-        self.data_path = "./data/goettingen/sliced/"
-        self.batch_size = 32
-        self.num_epochs = 100
+    model_name: str = "coco"
+    in_channels: int = 4
+    input_size: int = 256
+    data_path: str = "./data/goettingen/sliced/"
+    save_path: str = "./output/"
+    batch_size: int = 64
+    num_epochs: int = 10
+    optimizer_class: str = "adam"
+    loss: str = "l2"
+
 
 def test_main():
     # args = get_arguments()
     args = Args()
     data_slicer()
-    model = YoloModel(model_name=args.model, in_channels=args.in_channels, path=args.data_path)
-    model.train_on_data(batch_size=args.batch_size,
-                num_epochs=args.num_epochs,
-                optimizer_class='adam',
-                loss='l2')
+    model = YoloModel(args = args)
+    model.train_on_data()
 
 
 if __name__ == '__main__':
