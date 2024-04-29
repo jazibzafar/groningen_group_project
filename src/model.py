@@ -147,20 +147,11 @@ class YoloModel(nn.Module):
 
     def test(self):
         acc = 0.0
-        # if self.args.path.split("\\")[-1] == "sliced":
-        #     model_path = os.path.join(os.getcwd(), "models", self.path.split("\\")[-2], "best_model")
-        # else:
-        #     model_path = os.path.join(os.getcwd(), "models", self.path.split("\\")[-1], "best_model")
-        if Path(self.args.model_path).exists():
+        if Path(self.args.ckpt_path).exists():
             print("Loading Best Model for task")
-            self.load_state_dict(torch.load(self.args.model_path))
-        # print(f"Creating test datasets and loaders for {self.path}")
-        # data = DatasetSegmentation(path)
-        # _, _, test_data = random_split(data, [0.7, 0.1, 0.2], generator=self.data_generator)
-        # del data
+            self.load_state_dict(torch.load(self.args.ckpt_path))
 
         test_loader = DataLoader(self.test_data,batch_size=1, shuffle=True)
-
         print("Starting Testing")
         self.eval()
         with torch.no_grad():
@@ -169,7 +160,7 @@ class YoloModel(nn.Module):
                 voutputs = voutputs.squeeze(1)
                 acc += calculate_performance(vlabels, voutputs)
         acc /= len(test_loader)
-        print(f"Testing Acc: {acc}")
+        print(f"Testing iou: {acc}")
 
     def predict(self):
         pass
