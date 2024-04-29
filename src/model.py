@@ -15,14 +15,19 @@ from src.utils import DatasetSegmentation, calculate_performance, GoeTransform, 
 
 
 class YoloModel(nn.Module):
-    def __init__(self, model_name: str = "coco", in_channels: int = 4):
+    def __init__(self,
+                 model_name: str = "coco",
+                 in_channels: int = 4,
+                 input_size: int = 256,
+                 path: str = "./data/goettingen"):
         super().__init__()
+        self.path = path
         #TODO: change model loading paths
         if model_name == "coco":
             model = YOLO("./models/yolov8m-seg.pt")
-        elif model_name == "retrained_coco":
+        elif model_name == "pretrained_coco":
             model = YOLO("yolov8m-seg.yaml")
-        elif model_name == "retrained_empty":
+        elif model_name == "pretrained_empty":
             model = YOLO("yolov8m-seg.yaml")
         else:
             model = YOLO("yolov8m-seg.yaml")
@@ -37,6 +42,11 @@ class YoloModel(nn.Module):
         self.out_2 = nn.Upsample(scale_factor=2)
 
         self.data_generator = torch.Generator().manual_seed(2804)
+        self.augment = GoeTransform(input_size=input_size)
+        self.data = DatasetSegmentation(self.path, transform=self.augment)
+        self.train_data, self.validation_data, self.test_data = random_split(self.data,
+                                                                             [0.7, 0.1, 0.2],
+                                                                             generator=self.data_generator)
 
     def forward(self, x):
         x = F.silu(self.inp(x))
@@ -46,12 +56,11 @@ class YoloModel(nn.Module):
         return x
     
     def train_on_data(self,
-              path = "./data/goettingen",
-              input_size: int = 256,
-              batch_size: int = 64,
-              num_epochs: int = 100,
-              optimizer_class: str = "adam",
-              loss: str = "l2"):
+                      save_path = "./outputs/",
+                      batch_size: int = 64,
+                      num_epochs: int = 100,
+                      optimizer_class: str = "adam",
+                      loss: str = "l2"):
         
         training_loss = []
         training_acc = []
@@ -59,14 +68,14 @@ class YoloModel(nn.Module):
         validation_acc = []
         best_vloss = 1000
             
-        print(f"Creating training and validation datasets and loaders for {path}")
-        augment = GoeTransform(input_size=input_size)
-        data = DatasetSegmentation(path, transform=augment)
-        train_data, validation_data, _ = random_split(data, [0.7, 0.1, 0.2], generator=self.data_generator)
-        del data
+        # print(f"Creating training and validation datasets and loaders for {path}")
+        # augment = GoeTransform(input_size=input_size)
+        # data = DatasetSegmentation(path, transform=augment)
+        # train_data, validation_data, _ = random_split(data, [0.7, 0.1, 0.2], generator=self.data_generator)
+        # del data
         
-        train_loader = DataLoader(train_data,batch_size=batch_size, shuffle=True)
-        validation_loader = DataLoader(validation_data,batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(self.train_data,batch_size=batch_size, shuffle=True)
+        validation_loader = DataLoader(self.validation_data,batch_size=batch_size, shuffle=True)
         
         if optimizer_class == "adam":
             optimizer = optim.Adam(self.parameters())
@@ -82,8 +91,8 @@ class YoloModel(nn.Module):
         else:
             criterion = nn.MSELoss()
 
-        print(f"Starting training on {path}")
-        for epoch in tqdm(range(num_epochs)):
+        print(f"Starting training on {self.path}")
+        for epoch in range(num_epochs):
             running_loss = 0.0
             acc= 0.0
             running_vloss = 0.0
@@ -121,15 +130,15 @@ class YoloModel(nn.Module):
             training_acc.append(acc)
             validation_loss.append(running_vloss)
             validation_acc.append(vacc)
-            print(f"Training Loss: {running_loss} Training Acc: {acc} Validation Loss: {running_vloss} Validation Acc: {vacc}")
-            
+            # print(f"Training Loss: {running_loss} Training Acc: {acc} Validation Loss: {running_vloss} Validation Acc: {vacc}")
+            print(f"[train loss: {running_loss:.4f}] [train iou {acc:.4f}] [val loss: {running_vloss:.4f}] [val iou {vacc:.4f}]")
             # Saving best model
             if running_vloss < best_vloss:
                 best_vloss = running_vloss
-                if path.split("\\")[-1] == "sliced":
-                    save_path = os.path.join(os.getcwd(), "models", path.split("\\")[-2])
-                else:
-                    save_path = os.path.join(os.getcwd(), "models", path.split("\\")[-1])
+                # if path.split("\\")[-1] == "sliced":
+                #     save_path = os.path.join(os.getcwd(), "models", path.split("\\")[-2])
+                # else:
+                #     save_path = os.path.join(os.getcwd(), "models", path.split("\\")[-1])
                 if not(Path(save_path).exists()):
                     os.mkdir(save_path)
                 self.save(save_path)
@@ -143,22 +152,22 @@ class YoloModel(nn.Module):
         pass
 
     def test(self,
-             path = "./data/goettingen",
+             # path = "./data/goettingen",
              input_size: int = 256):
         acc = 0.0
-        if path.split("\\")[-1] == "sliced":
-            model_path = os.path.join(os.getcwd(), "models", path.split("\\")[-2], "best_model")
+        if self.path.split("\\")[-1] == "sliced":
+            model_path = os.path.join(os.getcwd(), "models", self.path.split("\\")[-2], "best_model")
         else:
-            model_path = os.path.join(os.getcwd(), "models", path.split("\\")[-1], "best_model")
+            model_path = os.path.join(os.getcwd(), "models", self.path.split("\\")[-1], "best_model")
         if Path(model_path).exists():
             print("Loading Best Model for task")
             self.load_state_dict(torch.load(model_path))
-        print(f"Creating test datasets and loaders for {path}")
-        data = DatasetSegmentation(path)
-        _, _, test_data = random_split(data, [0.7, 0.1, 0.2], generator=self.data_generator)
-        del data
+        # print(f"Creating test datasets and loaders for {self.path}")
+        # data = DatasetSegmentation(path)
+        # _, _, test_data = random_split(data, [0.7, 0.1, 0.2], generator=self.data_generator)
+        # del data
 
-        test_loader = DataLoader(test_data,batch_size=1, shuffle=True)
+        test_loader = DataLoader(self.test_data,batch_size=1, shuffle=True)
 
         print("Starting Testing")
         self.eval()
@@ -172,6 +181,7 @@ class YoloModel(nn.Module):
 
     def predict(self):
         pass
-    def save(self, save_path):
-        torch.save(self.state_dict(), save_path + "/best_model")
+    def save(self, save_path,):
+        torch.save(self.state_dict(), save_path + "best_model.ckpt")
+        # TODO: save the losses as well.
         pass
