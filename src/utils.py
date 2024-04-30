@@ -71,10 +71,10 @@ class DatasetSegmentation(Dataset):
         
         tile = imread(tile_path)
         # ensure channels == 4
-        if tile.shape[0] > 4:
-            tile = tile[0:4, :, :]
+        if tile.shape[2] > 4:
+            tile = tile[:, :, 0:4]  # channel x width x height -> widht x height x channel
         # tile = ToTensor()(tile)
-        # torch.permute(tile, (2, 0, 1))
+        # tile = torch.permute(tile, (0, 1, 2)).numpy()
         if self.transform:
             tile = self.transform(image=tile)
 
