@@ -26,7 +26,7 @@ def test_main():
     args = Args()
     # data_slicer()
     model = YoloModel(args = args)
-    # model.train_on_data()
+    model.train_on_data()
     test_tiles, test_masks, test_preds = model.test()
     return test_tiles, test_masks, test_preds
 
