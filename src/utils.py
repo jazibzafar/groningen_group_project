@@ -70,6 +70,9 @@ class DatasetSegmentation(Dataset):
         mask_path = os.path.join(self.mask_path, mask_name)
         
         tile = imread(tile_path)
+        # ensure channels == 4
+        if tile.shape[0] > 4:
+            tile = tile[0:4, :, :]
         # tile = ToTensor()(tile)
         # torch.permute(tile, (2, 0, 1))
         if self.transform:

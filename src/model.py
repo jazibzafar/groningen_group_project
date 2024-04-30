@@ -169,8 +169,56 @@ class YoloModel(nn.Module):
         print(f"Testing iou: {acc}")
         return test_tiles, test_masks, test_preds
 
-    def predict(self):
-        pass
+    def train_only_output_layer(self):
+        for i, param in enumerate(self.model.parameters()):
+            if i < 3:  # Adjust the number based on the layers you want to freeze
+                param.requires_grad = False
+        self.train_on_data()
+        return
+
+    def pretrain_with_bangalore(self):
+        pretrain_path = "./bangalore"
+        pretrain_augment = GoeTransform(input_size=self.args.input_size)
+        pretrain_data = DatasetSegmentation(pretrain_path)
+        # not validating just pre-training
+        train_loader = DataLoader(pretrain_data, batch_size=self.args.batch_size, shuffle=True)
+        optimizer = optim.Adam(self.parameters())
+        criterion = nn.MSELoss()
+        pretrain_loss = []
+        pretrain_iou  = []
+        start_time = time.time()
+        for epoch in range(self.args.pt_num_epochs):
+            running_loss = 0.0
+            acc = 0.0
+            print("Epoch {}/{}".format(epoch + 1, self.args.pt_num_epochs))
+            # Training one epoch
+            self.train(True)
+            for inputs, labels in train_loader:  # Assuming train_loader is your DataLoader
+                optimizer.zero_grad()  # Zero the gradients
+                outputs = self(inputs)  # Forward pass
+                outputs = outputs.squeeze(1)  # labels are bs x w x h while outputs are bs x 1 x w x h; this corrects it
+                loss = criterion(outputs, labels)  # Compute the loss
+                loss.backward()  # Backpropagation
+                optimizer.step()  # Update the weights
+                running_loss += loss.item()
+                acc += calculate_performance(labels, outputs)
+            running_loss /= len(train_loader)
+            acc /= len(train_loader)
+            pretrain_loss.append(running_loss)
+            pretrain_iou.append(acc)
+            print(f"[pretrain loss: {running_loss:.4f}] [pretrain iou {acc:.4f}]")
+        end_time = time.time()
+        tt = end_time - start_time
+        print(f"pretraining {self.args.args.pt_num_epochs} took {tt:.2f} seconds.")
+        print(f"an average of {tt / self.args.pt_num_epochs:.2f} seconds/epoch.")
+        # save the pretrain model
+        torch.save(self.state_dict(), self.args.pt_save_path + "pretrain_model.ckpt")
+        self.write_list_to_file(self.args.pt_save_path+"pretrain_loss.txt", pretrain_loss)
+        self.write_list_to_file(self.args.pt_save_path+"pretrain_iou.txt", pretrain_iou)
+        # moving on to regular training
+        print(f"pretraining complete: training on normal dataset.")
+        self.train_on_data()
+        return
 
     def save(self, save_path,):
         torch.save(self.state_dict(), save_path + "best_model.ckpt")
@@ -178,7 +226,7 @@ class YoloModel(nn.Module):
         self.write_list_to_file(save_path + "val_loss.txt", self.validation_loss)
         self.write_list_to_file(save_path + "train_iou.txt", self.training_acc)
         self.write_list_to_file(save_path + "val_iou.txt", self.validation_acc)
-        pass
+        return
 
     @staticmethod
     def write_list_to_file(path, list_to_write):
