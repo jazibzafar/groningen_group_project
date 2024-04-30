@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split, Subset
 
-from src.utils import DatasetSegmentation, calculate_performance, GoeTransform, EarlyStopping
+from src.utils import DatasetSegmentation, calculate_performance, GoeTransform, EarlyStopping, BanTransform
 
 
 class YoloModel(nn.Module):
@@ -59,7 +59,7 @@ class YoloModel(nn.Module):
         return train_data, validation_data, test_data
 
     def forward(self, x):
-        x = F.silu(self.inp(x))
+        x = F.silu(self.inp(x.float()))
         x = F.silu(self.backbone(x))
         x = F.silu(self.out_1(x))
         x = F.silu(self.out_2(x))
@@ -202,8 +202,8 @@ class YoloModel(nn.Module):
 
     def pretrain_with_bangalore(self):
         pretrain_path = "./bangalore"
-        pretrain_augment = GoeTransform(input_size=self.args.input_size)
-        pretrain_data = DatasetSegmentation(pretrain_path)
+        pretrain_augment = BanTransform(input_size=self.args.input_size)
+        pretrain_data = DatasetSegmentation(pretrain_path, key='bangalore', transform=pretrain_augment)
         # not validating just pre-training
         train_loader = DataLoader(pretrain_data, batch_size=self.args.batch_size, shuffle=True)
         optimizer = optim.Adam(self.parameters())
@@ -233,7 +233,7 @@ class YoloModel(nn.Module):
             print(f"[pretrain loss: {running_loss:.4f}] [pretrain iou {acc:.4f}]")
         end_time = time.time()
         tt = end_time - start_time
-        print(f"pretraining {self.args.args.pt_num_epochs} took {tt:.2f} seconds.")
+        print(f"pretraining {self.args.pt_num_epochs} took {tt:.2f} seconds.")
         print(f"an average of {tt / self.args.pt_num_epochs:.2f} seconds/epoch.")
         # save the pretrain model
         torch.save(self.state_dict(), self.args.pt_save_path + "pretrain_model.ckpt")
