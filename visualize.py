@@ -4,6 +4,7 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import ImageGrid
 from src.model import YoloModel
 plt.rcParams['figure.figsize'] = (5,5)
+import pickle
 
 ##
 def to_rgb(img_in):
@@ -23,30 +24,60 @@ def show_img(img, title=''):
 
 
 ##
-class Args:
-    model_name: str = "coco"
-    in_channels: int = 4
-    input_size: int = 256
-    data_path: str = "./data/goettingen/sliced/"
-    save_path: str = "./output/"
-    ckpt_path: str = "./output/best_model.ckpt"
-    pred_path: str = "./data/goettingen/predict"
-    batch_size: int = 32
-    num_epochs: int = 100
-    optimizer_class: str = "adam"
-    loss: str = "l2"
+# testing if the tiles are the same
+path_direct_tiles = "./pickled/direct_tiles.pkl"
+path_pretrain_tiles = "./pickled/pretrain_tiles.pkl"
 
-args = Args()
-model = YoloModel(args = args)
-test_tiles, test_masks, test_preds = model.test()
+with open(path_direct_tiles, "rb") as f:
+    direct_tiles = pickle.load(f)
+
+with open(path_pretrain_tiles, "rb") as f:
+    pretrain_tiles = pickle.load(f)
+
+
+# ##
+# tile1 = to_rgb(direct_tiles[0])
+# show_img(tile1, "")
+#
+# tile2 = to_rgb(pretrain_tiles[2])
+# show_img(tile2, "")
+#
+# ##
+# path_direct_masks = "./pickled/direct_masks.pkl"
+# with open(path_direct_masks, "rb") as f:
+#     direct_masks = pickle.load(f)
+# mask1 = direct_masks[0]
+# show_img(mask1[0])
+#
+# mask2 = direct_masks[2]
+# show_img(mask2[0])
+#
+##
+path_direct_preds = "./pickled/direct_preds.pkl"
+with open(path_direct_preds, "rb") as f:
+    direct_preds = pickle.load(f)
+
+pred1 = direct_preds[0]
+show_img(pred1[0])
+
+pred2 = direct_preds[2]
+show_img(pred2[0])
 
 ##
-tile1 = to_rgb(test_tiles[0])
-show_img(tile1, "")
-mask1 = test_masks[0]
-show_img(mask1[0])
-pred1 = test_preds[0]
-show_img(pred1[0], "")
+path_pretrain_preds = "./pickled/pretrain_preds.pkl"
+with open(path_pretrain_preds, "rb") as f:
+    pretrain_preds = pickle.load(f)
+
+preda = pretrain_preds[0]
+show_img(preda[0])
+
+predb = pretrain_preds[2]
+show_img(predb[0])
+
+
+
+# pred1 = test_preds[0]
+# show_img(pred1[0], "")
 ##
 #
 # im1 = np.arange(100).reshape((10, 10))
